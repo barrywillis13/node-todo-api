@@ -13,7 +13,6 @@ app.post('/todos', (req, res) => {
   var todo = new Todo({
     text: req.body.text
   })
-
   todo.save().then((doc) => {
     res.send(doc);
   }, (e) => {
@@ -21,6 +20,18 @@ app.post('/todos', (req, res) => {
   });
 });
 
-app.listen(3000, ()=> {
-  console.log('Server up on port 3000');
-})
+app.post('/users', (req, res) => {
+  var user = new User({
+    name: req.body.name,
+    email: req.body.email
+  })
+  user.save().then((doc) => {
+    res.send(doc);
+  }, (e) => {
+    res.status(400).send(e);
+  });
+});
+
+app.listen(3121, ()=> {
+  console.log('Server up on port 3121');
+});
