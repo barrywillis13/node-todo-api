@@ -35,3 +35,5 @@ app.post('/users', (req, res) => {
 app.listen(3121, ()=> {
   console.log('Server up on port 3121');
 });
+
+module.exports = {app};
