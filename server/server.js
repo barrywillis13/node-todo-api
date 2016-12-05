@@ -8,6 +8,8 @@ var {User} = require('./models/user');
 
 var app = express();
 
+var port = process.env.PORT || 3121;
+
 app.use(bodyParser.json())
 
 app.post('/todos', (req, res) => {
@@ -56,8 +58,8 @@ app.get('/todos/:id', (req, res) => {
   }).catch((e) => console.log(e));
 });
 
-app.listen(3121, ()=> {
-  console.log('Server up on port 3121');
+app.listen(port, ()=> {
+  console.log(`Server up on port ${port}`);
 });
 
 module.exports = {app};
