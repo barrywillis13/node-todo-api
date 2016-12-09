@@ -1,5 +1,5 @@
 
-require('./config.config.js')
+require('./config/config.js')
 const _ =require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -19,6 +19,22 @@ app.use(bodyParser.json())
 // R O U T I N G
 ////////////////////////////////////////////////////////////////////////
 
+//USERS
+// C R E A T E   A   U S E R //////////////////////////////////////////
+app.post('/users', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password']);
+  var user = new User(body);
+
+  user.save().then(() => {
+    return user.generateAuthToken();
+  }).then((token) => {
+    res.header('x-auth', token).send(user);
+  }).catch((e) => {
+    res.status(400).send(e);
+  })
+});
+
+//TODOS
 // C R E A T E   A   T O D O ///////////////////////////////////////////
 app.post('/todos', (req, res) => {
   var todo = new Todo({
@@ -31,18 +47,7 @@ app.post('/todos', (req, res) => {
   });
 });
 
-// C R E A T E   A   U S E R //////////////////////////////////////////
-app.post('/users', (req, res) => {
-  var user = new User({
-    name: req.body.name,
-    email: req.body.email
-  })
-  user.save().then((doc) => {
-    res.send(doc);
-  }, (e) => {
-    res.status(400).send(e);
-  });
-});
+
 
 // F I N D   A L L   T O D O S ////////////////////////////////////////
 app.get('/todos', (req, res) => {
