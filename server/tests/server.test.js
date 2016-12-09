@@ -172,3 +172,38 @@ describe('PATCH /todos/:id', () => {
     });
 
   });
+
+describe('POST /users', () => {
+  it('should create a user', (done) => {
+    var email = 'example@example.com';
+    var password = 'abc123!';
+    request(app)
+    .post('/users')
+    .send({email, password})
+    .expect(200)
+    .expect((res) => {
+      expect(res.body.password).toNotBe(password)
+    })
+    .end(done)
+  })
+
+  it('should return validation errors if request invalid', (done) => {
+    var email = 'exampleexample.com';
+    var password = 'abc123!';
+    request(app)
+    .post('/users')
+    .send({email, password})
+    .expect(400)
+    .end(done);
+  })
+
+  it('should not create user if email in use', (done) => {
+    var email = 'example@example.com';
+    var password = 'abc123!';
+    request(app)
+    .post('/users')
+    .send({email, password})
+    .expect(400)
+    .end(done)
+  })
+})
