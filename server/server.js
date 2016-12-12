@@ -43,23 +43,14 @@ app.get('/users/me', authenticate, (req, res) => {
 // L O G I N /////////////////////////////////////////////////////////////
 app.post('/users/login', (req, res) => {
   var body = _.pick(req.body, ['email', 'password'])
-  User.findByCredentials(body.email, body.password).then((doc) => {
-      res.send(doc)
+
+  User.findByCredentials(body.email, body.password).then((user) => {
+    return user.generateAuthToken().then((token) => {
+      res.header('x-auth', token).send(user);
+    })
+  }).catch((e) => {
+    res.statuds(400).send()
   })
-  //
-  // var email = body.email
-  // User.findOne({email}).then((user) => {
-  //   if(!user){
-  //     return res.status(404).send();
-  //   }
-  //   bcrypt.compare(body.password, user.password, (err, result) => {
-  //     if(result) {
-  //       res.send(user)
-  //     }else {
-  //       return res.status(401).send();
-  //     }
-  //   })
-  // })
 })
 
 /////////////////////////////////////////////////////////////////////////
