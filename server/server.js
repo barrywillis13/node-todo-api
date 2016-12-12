@@ -35,9 +35,32 @@ app.post('/users', (req, res) => {
   })
 });
 
+// F E T C H   A   U S E R ///////////////////////////////////////////////
 app.get('/users/me', authenticate, (req, res) => {
   res.send(req.user);
 })
+
+// L O G I N /////////////////////////////////////////////////////////////
+app.post('/users/login', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password'])
+
+  User.findOne({req.email}).then((user) => {
+    if(!user){
+      return res.status(404).send();
+    }
+    var match;
+    bcrypt.compare(req.password, user.password, (err, res) => {
+      match = res;
+    })
+    if(match) {
+      res.send(user)
+    }else {
+      res.status(401).send();
+    }
+  })
+})
+
+/////////////////////////////////////////////////////////////////////////
 
 //TODOS
 // C R E A T E   A   T O D O ///////////////////////////////////////////
@@ -51,7 +74,6 @@ app.post('/todos', (req, res) => {
     res.status(400).send(e);
   });
 });
-
 
 
 // F I N D   A L L   T O D O S ////////////////////////////////////////
@@ -122,7 +144,7 @@ app.delete('/todos/:id', (req, res) => {
       res.status(400).send();
     })
   });
-
+////////////////////////////////////////////////////////////////////////
 // L I S T E N E R /////////////////////////////////////////////////////
 app.listen(port, ()=> {
   console.log(`Server up on port ${port}`);
