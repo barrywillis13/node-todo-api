@@ -52,7 +52,18 @@ UserSchema.statics.findByCredentials = function (email, password) {
     })
   })
 }
+///////////////////////////////////////////////////////////////////////////////////
 
+UserSchema.methods.removeToken = function (token) {
+  var user = this;
+  return user.update({
+    $pull: {
+      tokens:{
+        token: {token}
+      }
+    }
+  })
+}
 ///////////////////////////////////////////////////////////////////////////////////
 UserSchema.methods.toJSON = function () {
   var user = this;

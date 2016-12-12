@@ -35,7 +35,7 @@ app.post('/users', (req, res) => {
   })
 });
 
-// F E T C H   A   U S E R ///////////////////////////////////////////////
+// F E T C H   C U R R E N T   U S E R ///////////////////////////////////////////////
 app.get('/users/me', authenticate, (req, res) => {
   res.send(req.user);
 })
@@ -49,7 +49,16 @@ app.post('/users/login', (req, res) => {
       res.header('x-auth', token).send(user);
     })
   }).catch((e) => {
-    res.statuds(400).send()
+    res.status(400).send()
+  })
+})
+
+// L O G O U T /////////////////////////////////////////////////////////////
+app.delete('/users/me/token', authenticate, (req, res) => {
+  req.user.removeToken(req.token).then(() => {
+    res.status(200).send();
+  }, () => {
+    res.status(400).send();
   })
 })
 
