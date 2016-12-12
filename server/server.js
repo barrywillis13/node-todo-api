@@ -43,21 +43,23 @@ app.get('/users/me', authenticate, (req, res) => {
 // L O G I N /////////////////////////////////////////////////////////////
 app.post('/users/login', (req, res) => {
   var body = _.pick(req.body, ['email', 'password'])
-  var email = body.email
-  User.findOne({email}).then((user) => {
-    if(!user){
-      return res.status(404).send();
-    }
-    var user1;
-    bcrypt.compare(body.password, user.password, (err, result) => {
-    if(result) {
-      res.send(user)
-    }else {
-      return res.status(401).send();
-    }
-    })
-
+  User.findByCredentials(body.email, body.password).then((doc) => {
+      res.send(doc)
   })
+  //
+  // var email = body.email
+  // User.findOne({email}).then((user) => {
+  //   if(!user){
+  //     return res.status(404).send();
+  //   }
+  //   bcrypt.compare(body.password, user.password, (err, result) => {
+  //     if(result) {
+  //       res.send(user)
+  //     }else {
+  //       return res.status(401).send();
+  //     }
+  //   })
+  // })
 })
 
 /////////////////////////////////////////////////////////////////////////
