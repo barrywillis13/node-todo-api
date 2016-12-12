@@ -9,7 +9,7 @@ const {authenticate} = require('./middleware/authenticate')
 const {mongoose} = require('./db/mongoose.js');
 const {Todo} = require('./models/todo');
 const {User} = require('./models/user');
-
+const bcrypt = require('bcryptjs')
 var app = express();
 
 var port = process.env.PORT;
@@ -43,20 +43,20 @@ app.get('/users/me', authenticate, (req, res) => {
 // L O G I N /////////////////////////////////////////////////////////////
 app.post('/users/login', (req, res) => {
   var body = _.pick(req.body, ['email', 'password'])
-
-  User.findOne({req.email}).then((user) => {
+  var email = body.email
+  User.findOne({email}).then((user) => {
     if(!user){
       return res.status(404).send();
     }
-    var match;
-    bcrypt.compare(req.password, user.password, (err, res) => {
-      match = res;
-    })
-    if(match) {
+    var user1;
+    bcrypt.compare(body.password, user.password, (err, result) => {
+    if(result) {
       res.send(user)
     }else {
-      res.status(401).send();
+      return res.status(401).send();
     }
+    })
+
   })
 })
 
