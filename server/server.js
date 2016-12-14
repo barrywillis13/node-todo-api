@@ -5,6 +5,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 
+const {logger} = require('./middleware/logger')
 const {authenticate} = require('./middleware/authenticate')
 const {mongoose} = require('./db/mongoose.js');
 const {Todo} = require('./models/todo');
@@ -14,13 +15,23 @@ var app = express();
 
 var port = process.env.PORT;
 
+////////////////////////////////////////////////////////////////////////
+// M I D D L E W A R E
+////////////////////////////////////////////////////////////////////////
+
 app.use(bodyParser.json())
+app.use(logger)
 
 ////////////////////////////////////////////////////////////////////////
 // R O U T I N G
 ////////////////////////////////////////////////////////////////////////
 
-//USERS
+//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
+//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
+// U S E R S
+//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
+//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
+
 // C R E A T E   A   U S E R //////////////////////////////////////////
 app.post('/users', (req, res) => {
   var body = _.pick(req.body, ['email', 'password']);
@@ -57,18 +68,22 @@ app.post('/users/login', (req, res) => {
 app.delete('/users/me/token', authenticate, (req, res) => {
   req.user.removeToken(req.token).then(() => {
     res.status(200).send();
-  }, () => {
+  }, () => {server
     res.status(400).send();
   });
 });
 
-/////////////////////////////////////////////////////////////////////////
+//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
+//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
+// T O D O S
+//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
+//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
 
-//TODOS
 // C R E A T E   A   T O D O ///////////////////////////////////////////
-app.post('/todos', (req, res) => {
+app.post('/todos', authenticate,  (req, res) => {
   var todo = new Todo({
-    text: req.body.text
+    text: req.body.text,
+    _creator: req.user._id
   })
   todo.save().then((doc) => {
     res.send(doc);
@@ -77,10 +92,11 @@ app.post('/todos', (req, res) => {
   });
 });
 
-
 // F I N D   A L L   T O D O S ////////////////////////////////////////
-app.get('/todos', (req, res) => {
-  Todo.find().then((todos) => {
+app.get('/todos', authenticate, (req, res) => {
+  Todo.find({
+    _creator: req.user._id
+  }).then((todos) => {
     res.send({todos})
   }, (e) => {
     res.status(400).send(e);
@@ -88,7 +104,7 @@ app.get('/todos', (req, res) => {
 });
 
 // F I N D   T O D O   B Y   I D /////////////////////////////////////
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', authenticate, (req, res) => {
   var id = req.params.id;
   if (!ObjectID.isValid(id)) {
     return res.status(404).send();
@@ -104,14 +120,17 @@ app.get('/todos/:id', (req, res) => {
 });
 
 // R E M O V E ////////////////////////////////////////////////////////
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
   var id = req.params.id;
 
   if(!ObjectID.isValid(id)){
     return res.status(404).send();
   };
 
-  Todo.findByIdAndRemove(id).then((todo) => {
+  Todo.findByIdAndRemove({
+    _id: id,
+    _creator: req.user._id
+  }).then((todo) => {
     if(todo){
       res.send(todo);
     }else{
@@ -121,7 +140,7 @@ app.delete('/todos/:id', (req, res) => {
 })
 
 // U P D A T E ////////////////////////////////////////////////////////
-  app.patch('/todos/:id', (req, res) => {
+  app.patch('/todos/:id', authenticate, (req, res) => {
     var id = req.params.id;
     var body = _.pick(req.body, ['text', 'completed']);
 
@@ -135,16 +154,20 @@ app.delete('/todos/:id', (req, res) => {
       body.completed = false;
       body.completedAt = null;
     }
-
-    Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
-      if (!todo){
-        return res.status(404).send();
+    Todo.findOneAndUpdate({_id: id, _creator: req.user._id}, {$set:body}, {new: true}).then((todo) => {
+      if(!todo) {
+        return res.status(404).send()
       }
-
       res.send({todo});
-    }).catch ((e) => {
-      res.status(400).send();
     })
+    // Todo.findOneAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+    //   if (!todo){
+    //     return res.status(404).send();
+    //   }
+    //   res.send({todo});
+    // }).catch ((e) => {
+    //   res.status(400).send();
+    // })
   });
 ////////////////////////////////////////////////////////////////////////
 // L I S T E N E R /////////////////////////////////////////////////////
